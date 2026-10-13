@@ -2,3 +2,6 @@
 name = "chip8_emu"
 version = "0.1.0"
 edition = "2024"
+
+[dependencies]
+sdl2 = "0.38.0"

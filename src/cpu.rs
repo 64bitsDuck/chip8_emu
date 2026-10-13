@@ -1,11 +1,17 @@
 use std::ops::{Index, IndexMut};
 
 pub struct Cpu {
-    pc: u16,
-    i: u16,
-    d_timer: u8,
-    s_timer: u8,
+    pub pc: u16,
+    pub i: u16,
+    pub d_timer: u8,
+    pub s_timer: u8,
     pub v_reg: VariableRegisters,
+}
+
+impl Cpu {
+    pub fn new() -> Self {
+        Cpu { pc: 0x200, i: 0, d_timer: 0, s_timer: 0, v_reg: VariableRegisters { 0: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }}
+    }
 }
 
 pub struct VariableRegisters([u8; 16]);
