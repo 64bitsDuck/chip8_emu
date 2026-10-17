@@ -1,6 +1,7 @@
-use std::fs;
+use std::{fs::{self, File}, io::{BufRead, BufReader}, println};
 
 const FONT_START: usize = 0x050;
+const ROM_START: usize = 0x200;
 
 const FONT: [u8; 80] = [0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
                         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -20,6 +21,7 @@ const FONT: [u8; 80] = [0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
                         0xF0, 0x80, 0xF0, 0x80, 0x80];// F
 const FONT_END: usize = FONT_START + FONT.len();
 
+#[derive(Clone, Copy)] 
 pub struct Ram(pub [u8; 4096]);
 
 impl Ram {
@@ -30,14 +32,12 @@ impl Ram {
 
         ram
     }
-}
 
-fn load_rom(path: String) -> Vec<u8> {
-    let content = fs::read_to_string(path).expect("Should've been able to open the file.");
+    pub fn load_rom(mut self, path: String) {    
+        let rom = fs::read(path).expect("Should've been able to open the file");
 
-    content
-        .chars()
-        .filter_map(|c| c.to_digit(16))
-        .map(|d| d as u8)
-        .collect()
+        println!("{:?}", rom);
+
+        self.0[ROM_START..ROM_START+rom.len()].copy_from_slice(&rom);
+    }
 }
