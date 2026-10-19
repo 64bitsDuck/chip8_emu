@@ -1,4 +1,4 @@
-use std::{fs::{self, File}, io::{BufRead, BufReader}, println};
+use std::fs;
 
 const FONT_START: usize = 0x050;
 const ROM_START: usize = 0x200;
@@ -33,10 +33,10 @@ impl Ram {
         ram
     }
 
-    pub fn load_rom(mut self, path: String) {    
+    pub fn load_rom(&mut self, path: String) {    
         let rom = fs::read(path).expect("Should've been able to open the file");
 
-        println!("{:?}", rom);
+        println!("LOADED ROM: {:?}", rom);
 
         self.0[ROM_START..ROM_START+rom.len()].copy_from_slice(&rom);
     }

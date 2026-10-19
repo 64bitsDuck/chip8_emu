@@ -1,3 +1,5 @@
+use std::println;
+
 use crate::{cpu::Cpu, display::Display, keypad::KeyPad, memory::Ram};
 
 type Opcode = [u8; 4];
@@ -25,27 +27,33 @@ impl<'a> Emulator<'a> {
     }
 
     pub fn cycle(&mut self) {
-        let opcode = Self::fetch(self);
-        Self::decode(self, opcode);
-        Self::execute();
+        for i in 0..65 {
+            let opcode = Self::fetch(self);
+            Self::decode(self, opcode);
+            Self::execute();
+        }
     }
 
     pub fn fetch(&mut self) -> Opcode {
-        let nibble_1 = self.ram.0[self.cpu.pc as usize] / 10;
-        let nibble_2 = self.ram.0[self.cpu.pc as usize] % 10;
-        let nibble_3 = self.ram.0[(self.cpu.pc + 1) as usize] / 10;
-        let nibble_4 = self.ram.0[(self.cpu.pc + 1) as usize] % 10;
+        let nibble_1 = self.ram.0[self.cpu.pc as usize] / 16;
+        let nibble_2 = self.ram.0[self.cpu.pc as usize] % 16;
+        let nibble_3 = self.ram.0[(self.cpu.pc + 1) as usize] / 16;
+        let nibble_4 = self.ram.0[(self.cpu.pc + 1) as usize] % 16;
         let curr_instruction: Opcode = [nibble_1, nibble_2, nibble_3, nibble_4];
         self.cpu.pc += 2;
+
+        println!("Opcode: {:?}", curr_instruction);
+        println!("Program Counter: {}", self.cpu.pc);
+        
         curr_instruction
     }
 
     pub fn decode(&mut self, opcode: Opcode) {
         match opcode {
-            [SET, n2, n3, n4] => self.cpu.v_reg[n2 as usize] = n3 * 10 + n4, //u8::from_str_radix(&n3.to_string(), 16).unwrap() * 10 + u8::from_str_radix(&n4.to_string(), 16).unwrap(),
+            [SET, n2, n3, n4] => self.cpu.v_reg[n2 as usize] = n3 * 16 + n4, //u8::from_str_radix(&n3.to_string(), 16).unwrap() * 10 + u8::from_str_radix(&n4.to_string(), 16).unwrap(),
             CLEAR => self.display.framebuffer.fill(false),
-            [ADD, n2, n3, n4] => self.cpu.v_reg[n2 as usize] += n3 * 10 + n4,
-            [0xA, n2, n3, n4] => self.cpu.i = n2 as u16 * 100 + n3 as u16 * 10 + n4 as u16,
+            [ADD, n2, n3, n4] => self.cpu.v_reg[n2 as usize] += n3 * 16 + n4,
+            [0xA, n2, n3, n4] => self.cpu.i = n2 as u16 * 256 + n3 as u16 * 16 + n4 as u16,
             [0xD, n2, n3, n4] => {
                 let mut x = self.cpu.v_reg[n2 as usize] % self.display.height;
                 let mut y = self.cpu.v_reg[n3 as usize] % self.display.width;
