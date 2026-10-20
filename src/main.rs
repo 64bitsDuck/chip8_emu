@@ -3,14 +3,15 @@ mod memory;
 mod display;
 mod keypad;
 mod emulator;
-use std::println;
+
+use std::{thread::sleep, time::Duration};
 
 use cpu::Cpu;
 
 use crate::{display::Display, emulator::Emulator, memory::Ram, keypad::KeyPad};
 
-const HEIGHT: u8 = 32;
-const WIDTH: u8 = 64;
+const HEIGHT: usize = 32;
+const WIDTH: usize = 64;
 
 fn main() {
     let cpu: Cpu = Cpu::new();
@@ -26,5 +27,7 @@ fn main() {
  
     emulator.cycle();
 
-    display.show();
+    while display.can_continue() {
+        sleep(Duration::new(1, 0));
+    }
 }
