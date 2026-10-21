@@ -89,6 +89,7 @@ impl<'a> Emulator<'a> {
         self.cpu.i = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16;
     }
 
+    // TODO: From what I understand there is 0 reason why my x coordinate should be reset for every byte but it works & I want to never touch that opcode again so bad
     fn draw(&mut self, opcode: Opcode) {
         let mut y: u16 = self.cpu.v_reg[opcode.n3 as usize] as u16 % self.display.height as u16;
         
