@@ -1,5 +1,3 @@
-use std::println;
-
 use crate::{cpu::Cpu, display::Display, keypad::KeyPad, memory::Ram};
 
 #[derive(PartialEq)]

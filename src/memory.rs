@@ -35,9 +35,6 @@ impl Ram {
 
     pub fn load_rom(&mut self, path: String) {    
         let rom = fs::read(path).expect("Should've been able to open the file");
-
-        println!("LOADED ROM: {:?}", rom);
-
         self.0[ROM_START..ROM_START+rom.len()].copy_from_slice(&rom);
     }
 }
