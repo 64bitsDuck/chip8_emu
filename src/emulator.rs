@@ -90,12 +90,12 @@ impl<'a> Emulator<'a> {
     }
 
     fn draw(&mut self, opcode: Opcode) {
-        let mut x = self.cpu.v_reg[opcode.n2 as usize] as u16 % self.display.width as u16;
-        let mut y = self.cpu.v_reg[opcode.n3 as usize] as u16 % self.display.height as u16;
+        let mut y: u16 = self.cpu.v_reg[opcode.n3 as usize] as u16 % self.display.height as u16;
         
         self.cpu.v_reg[0xF] = 0;
         for n in self.cpu.i..self.cpu.i+opcode.n4 as u16 {
             let nth_byte = self.ram.0[n as usize];
+            let mut x = self.cpu.v_reg[opcode.n2 as usize] as u16 % self.display.width as u16;
             
             for p in (0..8).rev() {
                 let bit = (nth_byte >> p) & 1;
