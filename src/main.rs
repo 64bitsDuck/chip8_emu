@@ -23,7 +23,9 @@ fn main() {
 
     let keypad = KeyPad::new();
 
-    let mut emulator = Emulator::new(cpu, ram, &mut display, keypad);
+    let stack: Vec<u16> = Vec::new();
+
+    let mut emulator = Emulator::new(cpu, ram, &mut display, keypad, stack);
  
     emulator.cycle();
 

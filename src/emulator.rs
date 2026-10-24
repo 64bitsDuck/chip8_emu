@@ -31,11 +31,12 @@ pub struct Emulator<'a> {
     ram: Ram,
     display: &'a mut Display,
     keypad: KeyPad,
+    stack: Vec<u16>,
 }
 
 impl<'a> Emulator<'a> {
-    pub fn new(cpu: Cpu, ram: Ram, display: &mut Display, keypad: KeyPad) -> Emulator<'_> {
-        Emulator { cpu, ram, display: display, keypad }
+    pub fn new(cpu: Cpu, ram: Ram, display: &mut Display, keypad: KeyPad, stack: Vec<u16>) -> Emulator<'_> {
+        Emulator { cpu, ram, display: display, keypad, stack }
     }
 
     pub fn cycle(&mut self) {
@@ -122,5 +123,13 @@ impl<'a> Emulator<'a> {
 
     fn goto(&mut self, opcode: Opcode) {
         self.cpu.pc = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16;
+    }
+
+    fn call(&mut self, opcode: Opcode) {
+        self.cpu.pc = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16
+    }
+
+    fn add_to_reg(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] += self.cpu.v_reg[opcode.n3 as usize];
     }
 }
