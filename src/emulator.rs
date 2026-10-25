@@ -17,12 +17,13 @@ impl Opcode {
 const CLEAR: Opcode = Opcode::new(0x0, 0x0, 0xE, 0x0);
 const RET: Opcode = Opcode::new(0x0, 0x0, 0xE, 0xE);
 const GOTO: u8 = 1;
-const DO: u8 = 2;
+const CALL: u8 = 2;
 const SKIP_IF_EQUALS: u8 = 3;
 const SKIP_IF_NOTEQUALS: u8 = 4;
-const SKIP_IF_EQUALS_Y: u8 = 5;
+const SKIP_IF_X_EQUALS_Y: u8 = 5;
 const SET: u8 = 6;
 const ADD: u8 = 7;
+const SKIP_IF_X_NOT_EQUALS_Y: u8 = 9;
 const SET_I: u8 = 0xA;
 const DRAW: u8 = 0xD;
 
@@ -70,6 +71,12 @@ impl<'a> Emulator<'a> {
             Opcode { n1: SET_I, .. } => self.set_i(opcode),
             Opcode { n1: DRAW, .. } => self.draw(opcode),
             Opcode { n1: GOTO, .. } => self.goto(opcode),
+            Opcode { n1: CALL, .. } => self.call(opcode),
+            RET => self.ret(),
+            Opcode { n1: SKIP_IF_EQUALS, .. } => self.skip_if_equals(opcode),
+            Opcode { n1: SKIP_IF_NOTEQUALS, .. } => self.skip_if_not_equals(opcode),
+            Opcode { n1: SKIP_IF_X_EQUALS_Y, .. } => self.skip_if_x_equals_y(opcode),
+            Opcode { n1: SKIP_IF_X_NOT_EQUALS_Y, .. } => self.skip_if_x_not_equals_y(opcode),
             _ => ()
         }
     }
@@ -126,7 +133,36 @@ impl<'a> Emulator<'a> {
     }
 
     fn call(&mut self, opcode: Opcode) {
-        self.cpu.pc = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16
+        self.stack.push(self.cpu.pc);
+        self.cpu.pc = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16;
+    }
+
+    fn ret(&mut self) {
+        self.cpu.pc = self.stack.pop().expect("An element in the stack should've been found");
+    }
+
+    fn skip_if_equals(&mut self, opcode: Opcode) {
+        if self.cpu.v_reg[opcode.n2 as usize] == opcode.n3*16+opcode.n4 {
+            self.cpu.pc += 2;
+        }
+    }
+
+    fn skip_if_not_equals(&mut self, opcode: Opcode) {
+        if self.cpu.v_reg[opcode.n2 as usize] != opcode.n3*16+opcode.n4 {
+            self.cpu.pc += 2;
+        }
+    }
+
+    fn skip_if_x_equals_y(&mut self, opcode: Opcode) {
+        if self.cpu.v_reg[opcode.n2 as usize] == self.cpu.v_reg[opcode.n3 as usize] {
+            self.cpu.pc += 2;
+        }
+    }
+
+    fn skip_if_x_not_equals_y(&mut self, opcode: Opcode) {
+        if self.cpu.v_reg[opcode.n2 as usize] != self.cpu.v_reg[opcode.n3 as usize] {
+            self.cpu.pc += 2;
+        }
     }
 
     fn add_to_reg(&mut self, opcode: Opcode) {
