@@ -23,6 +23,7 @@ const SKIP_IF_NOTEQUALS: u8 = 4;
 const SKIP_IF_X_EQUALS_Y: u8 = 5;
 const SET: u8 = 6;
 const ADD: u8 = 7;
+const LOGIC_ARITHMETIC_N: u8 = 8;
 const SKIP_IF_X_NOT_EQUALS_Y: u8 = 9;
 const SET_I: u8 = 0xA;
 const DRAW: u8 = 0xD;
@@ -77,6 +78,10 @@ impl<'a> Emulator<'a> {
             Opcode { n1: SKIP_IF_NOTEQUALS, .. } => self.skip_if_not_equals(opcode),
             Opcode { n1: SKIP_IF_X_EQUALS_Y, .. } => self.skip_if_x_equals_y(opcode),
             Opcode { n1: SKIP_IF_X_NOT_EQUALS_Y, .. } => self.skip_if_x_not_equals_y(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x0, .. } => self.set_reg(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x1, .. } => self.binary_or(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x2, ..} => self.binary_and(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x3, ..} => self.logical_xor(opcode),
             _ => ()
         }
     }
@@ -165,7 +170,69 @@ impl<'a> Emulator<'a> {
         }
     }
 
+    fn set_reg(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize];
+    }
+
+    fn binary_or(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize] | self.cpu.v_reg[opcode.n3 as usize];
+    }
+
+    fn binary_and(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize] & self.cpu.v_reg[opcode.n3 as usize];
+    }
+
+    fn logical_xor(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize] ^ self.cpu.v_reg[opcode.n3 as usize];
+    }
+
+    // TODO: there is likely a nicer way to check the overlow but I don't know what
     fn add_to_reg(&mut self, opcode: Opcode) {
-        self.cpu.v_reg[opcode.n2 as usize] += self.cpu.v_reg[opcode.n3 as usize];
+        let x: u16 = (self.cpu.v_reg[opcode.n2 as usize] + self.cpu.v_reg[opcode.n3 as usize]).into();
+        if x > 255 {
+            self.cpu.v_reg[0xF] = 1;
+        }
+        else {
+            self.cpu.v_reg[opcode.n2 as usize] += self.cpu.v_reg[opcode.n3 as usize];
+            self.cpu.v_reg[0xF] = 0;
+        }
+    }
+
+    fn sub_x_from_y(&mut self, opcode: Opcode) {
+        let x: i16 = (self.cpu.v_reg[opcode.n2 as usize] - self.cpu.v_reg[opcode.n3 as usize]).into();
+        if x >= 0 {
+            self.cpu.v_reg[opcode.n2 as usize] = x as u8;
+            self.cpu.v_reg[0xF] = 1;
+        }
+        else {
+            self.cpu.v_reg[0xF] = 0;
+        }
+    }
+
+    fn sub_y_from_x(&mut self, opcode: Opcode) {
+        let x: i16 = (self.cpu.v_reg[opcode.n3 as usize] - self.cpu.v_reg[opcode.n2 as usize]).into();
+        if x >= 0 {
+            self.cpu.v_reg[opcode.n2 as usize] = x as u8;
+            self.cpu.v_reg[0xF] = 1;
+        }
+        else {
+            self.cpu.v_reg[0xF] = 0;
+        }
+    }
+
+    fn shift_right(&mut self, opcode: Opcode) {
+        // TODO: this line varies between differrent implementations so this should be executed only if an option is toggled.
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize];
+        let shifted_bit = self.cpu.v_reg[opcode.n2 as usize] & 1;
+        self.cpu.v_reg[opcode.n2 as usize] >>= 1;
+        self.cpu.v_reg[0xF] = shifted_bit;
+    }
+
+    fn shift_left(&mut self, opcode: Opcode) {
+        // TODO: this line varies between differrent implementations so this should be executed only if an option is toggled.
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize];
+        let shifted_bit = self.cpu.v_reg[opcode.n2 as usize] & 128;
+        self.cpu.v_reg[opcode.n2 as usize] <<= 1;
+        self.cpu.v_reg[0xF] = shifted_bit;
     }
 }
