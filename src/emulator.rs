@@ -80,15 +80,18 @@ impl<'a> Emulator<'a> {
             Opcode { n1: SKIP_IF_NOTEQUALS, .. } => self.skip_if_not_equals(opcode),
             Opcode { n1: SKIP_IF_X_EQUALS_Y, .. } => self.skip_if_x_equals_y(opcode),
             Opcode { n1: SKIP_IF_X_NOT_EQUALS_Y, .. } => self.skip_if_x_not_equals_y(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x0, .. } => self.set_reg(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x1, .. } => self.binary_or(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x2, ..} => self.binary_and(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x3, ..} => self.logical_xor(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x4, .. } => self.add_to_reg(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x5, .. } => self.sub_x_from_y(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x7, .. } => self.sub_y_from_x(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x6, .. } => self.shift_right(opcode),
-            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0xE, .. } => self.shift_left(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, .. } => match opcode {
+                Opcode { n4: 0x0, .. } => self.set_reg(opcode),
+                Opcode { n4: 0x1, .. } => self.binary_or(opcode),
+                Opcode { n4: 0x2, ..} => self.binary_and(opcode),
+                Opcode { n4: 0x3, ..} => self.logical_xor(opcode),
+                Opcode { n4: 0x4, .. } => self.add_to_reg(opcode),
+                Opcode { n4: 0x5, .. } => self.sub_x_from_y(opcode),
+                Opcode { n4: 0x7, .. } => self.sub_y_from_x(opcode),
+                Opcode { n4: 0x6, .. } => self.shift_right(opcode),
+                Opcode { n4: 0xE, .. } => self.shift_left(opcode),
+                _ => ()
+            }
             Opcode { n1: GOTO_OFFSET, .. } => self.goto_offset(opcode),
             Opcode { n1: RAND, .. } => self.rand(opcode),
             _ => ()
