@@ -17,7 +17,7 @@ fn main() {
     let cpu: Cpu = Cpu::new();
 
     let mut ram = Ram::new();
-    ram.load_rom("roms/test_opcode.ch8".to_string());
+    ram.load_rom("roms/3-corax+.ch8".to_string());
 
     let mut display = Display::new(HEIGHT, WIDTH);
 

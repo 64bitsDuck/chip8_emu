@@ -82,6 +82,11 @@ impl<'a> Emulator<'a> {
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x1, .. } => self.binary_or(opcode),
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x2, ..} => self.binary_and(opcode),
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x3, ..} => self.logical_xor(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x4, .. } => self.add_to_reg(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x5, .. } => self.sub_x_from_y(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x7, .. } => self.sub_y_from_x(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x6, .. } => self.shift_right(opcode),
+            Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0xE, .. } => self.shift_left(opcode),
             _ => ()
         }
     }
@@ -90,8 +95,11 @@ impl<'a> Emulator<'a> {
         self.cpu.v_reg[opcode.n2 as usize] = opcode.n3 * 16 + opcode.n4;
     }
 
+    //TODO: change this, it's just to test
     fn add(&mut self, opcode: Opcode) {
-        self.cpu.v_reg[opcode.n2 as usize] += opcode.n3 * 16 + opcode.n4;
+        if opcode.n3 as u16 * 16 + opcode.n4 as u16 <= 254 {
+            self.cpu.v_reg[opcode.n2 as usize] += opcode.n3 * 16 + opcode.n4;
+        }
     }
 
     fn clear(&mut self) {
@@ -190,6 +198,10 @@ impl<'a> Emulator<'a> {
     fn add_to_reg(&mut self, opcode: Opcode) {
         let x: u16 = (self.cpu.v_reg[opcode.n2 as usize] + self.cpu.v_reg[opcode.n3 as usize]).into();
         if x > 255 {
+            // wrapping: if we overflow, we cycle back from the beginning.
+            // TODO: look into std::num::Wrapping
+            let wrap: u8 = (x - 255) as u8;
+            self.cpu.v_reg[opcode.n2 as usize] = wrap;
             self.cpu.v_reg[0xF] = 1;
         }
         else {
@@ -205,6 +217,7 @@ impl<'a> Emulator<'a> {
             self.cpu.v_reg[0xF] = 1;
         }
         else {
+            self.cpu.v_reg[opcode.n2 as usize] = (255 + x) as u8;
             self.cpu.v_reg[0xF] = 0;
         }
     }
@@ -216,6 +229,7 @@ impl<'a> Emulator<'a> {
             self.cpu.v_reg[0xF] = 1;
         }
         else {
+            self.cpu.v_reg[opcode.n2 as usize] = (255 + x) as u8;
             self.cpu.v_reg[0xF] = 0;
         }
     }
