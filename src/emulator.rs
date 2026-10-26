@@ -29,6 +29,7 @@ const SET_I: u8 = 0xA;
 const GOTO_OFFSET: u8 = 0xB;
 const RAND: u8 = 0xC;
 const DRAW: u8 = 0xD;
+const MISC: u8 = 0xF;
 
 pub struct Emulator<'a> {
     cpu: Cpu,
@@ -94,6 +95,10 @@ impl<'a> Emulator<'a> {
             }
             Opcode { n1: GOTO_OFFSET, .. } => self.goto_offset(opcode),
             Opcode { n1: RAND, .. } => self.rand(opcode),
+            Opcode { n1: MISC, .. } => match opcode {
+                Opcode { n3: 0x1, n4: 0xE, .. } => self.add_to_index(opcode),
+                _ => ()
+            }
             _ => ()
         }
     }
@@ -258,5 +263,10 @@ impl<'a> Emulator<'a> {
 
     fn rand(&mut self, opcode: Opcode) {
         self.cpu.v_reg[opcode.n2 as usize] = rand::random_range(u8::MIN..u8::MAX) & (opcode.n3 * 16 + opcode.n4);
+    }
+
+    //TODO: implement quirk (sets VF to 1 if it overflows form 0FFF to above 1000)
+    fn add_to_index(&mut self, opcode: Opcode) {
+        self.cpu.i += self.cpu.v_reg[opcode.n2 as usize] as u16;
     }
 }
