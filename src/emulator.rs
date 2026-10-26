@@ -207,11 +207,11 @@ impl<'a> Emulator<'a> {
     fn sub_x_from_y(&mut self, opcode: Opcode) {
         let x: i16 = self.cpu.v_reg[opcode.n2 as usize] as i16 - self.cpu.v_reg[opcode.n3 as usize] as i16;
         if x >= 0 {
-            self.cpu.v_reg[opcode.n2 as usize] = x as u8;
+            self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize].wrapping_sub(self.cpu.v_reg[opcode.n3 as usize]);
             self.cpu.v_reg[0xF] = 1;
         }
         else {
-            self.cpu.v_reg[opcode.n2 as usize] = (255 + x) as u8;
+            self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize].wrapping_sub(self.cpu.v_reg[opcode.n3 as usize]);
             self.cpu.v_reg[0xF] = 0;
         }
     }
@@ -219,11 +219,11 @@ impl<'a> Emulator<'a> {
     fn sub_y_from_x(&mut self, opcode: Opcode) {
         let x: i16 = self.cpu.v_reg[opcode.n3 as usize] as i16 - self.cpu.v_reg[opcode.n2 as usize] as i16;
         if x >= 0 {
-            self.cpu.v_reg[opcode.n2 as usize] = x as u8;
+            self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize].wrapping_sub(self.cpu.v_reg[opcode.n2 as usize]);
             self.cpu.v_reg[0xF] = 1;
         }
         else {
-            self.cpu.v_reg[opcode.n2 as usize] = (255 + x) as u8;
+            self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize].wrapping_sub(self.cpu.v_reg[opcode.n2 as usize]);
             self.cpu.v_reg[0xF] = 0;
         }
     }
