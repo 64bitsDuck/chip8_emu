@@ -20,7 +20,7 @@ impl Display {
             ..Default::default()
         };
         let mut window = Window::new("Chip8", width, height, opts).unwrap();
-        window.set_target_fps(60);
+        window.set_target_fps(10);
 
         let framebuffer: Vec<bool> = vec![false; width  * height];
         Display { height, width, framebuffer, window }

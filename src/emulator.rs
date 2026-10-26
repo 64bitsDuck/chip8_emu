@@ -95,11 +95,8 @@ impl<'a> Emulator<'a> {
         self.cpu.v_reg[opcode.n2 as usize] = opcode.n3 * 16 + opcode.n4;
     }
 
-    //TODO: change this, it's just to test
     fn add(&mut self, opcode: Opcode) {
-        if opcode.n3 as u16 * 16 + opcode.n4 as u16 <= 254 {
-            self.cpu.v_reg[opcode.n2 as usize] += opcode.n3 * 16 + opcode.n4;
-        }
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize].wrapping_add(opcode.n3 * 16 + opcode.n4);
     }
 
     fn clear(&mut self) {
@@ -196,12 +193,9 @@ impl<'a> Emulator<'a> {
 
     // TODO: there is likely a nicer way to check the overlow but I don't know what
     fn add_to_reg(&mut self, opcode: Opcode) {
-        let x: u16 = (self.cpu.v_reg[opcode.n2 as usize] + self.cpu.v_reg[opcode.n3 as usize]).into();
+        let x: u16 = self.cpu.v_reg[opcode.n2 as usize] as u16 + self.cpu.v_reg[opcode.n3 as usize] as u16;
         if x > 255 {
-            // wrapping: if we overflow, we cycle back from the beginning.
-            // TODO: look into std::num::Wrapping
-            let wrap: u8 = (x - 255) as u8;
-            self.cpu.v_reg[opcode.n2 as usize] = wrap;
+            self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n2 as usize].wrapping_add(self.cpu.v_reg[opcode.n3 as usize]);
             self.cpu.v_reg[0xF] = 1;
         }
         else {
@@ -211,7 +205,7 @@ impl<'a> Emulator<'a> {
     }
 
     fn sub_x_from_y(&mut self, opcode: Opcode) {
-        let x: i16 = (self.cpu.v_reg[opcode.n2 as usize] - self.cpu.v_reg[opcode.n3 as usize]).into();
+        let x: i16 = self.cpu.v_reg[opcode.n2 as usize] as i16 - self.cpu.v_reg[opcode.n3 as usize] as i16;
         if x >= 0 {
             self.cpu.v_reg[opcode.n2 as usize] = x as u8;
             self.cpu.v_reg[0xF] = 1;
@@ -223,7 +217,7 @@ impl<'a> Emulator<'a> {
     }
 
     fn sub_y_from_x(&mut self, opcode: Opcode) {
-        let x: i16 = (self.cpu.v_reg[opcode.n3 as usize] - self.cpu.v_reg[opcode.n2 as usize]).into();
+        let x: i16 = self.cpu.v_reg[opcode.n3 as usize] as i16 - self.cpu.v_reg[opcode.n2 as usize] as i16;
         if x >= 0 {
             self.cpu.v_reg[opcode.n2 as usize] = x as u8;
             self.cpu.v_reg[0xF] = 1;
