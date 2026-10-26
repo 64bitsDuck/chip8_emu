@@ -26,6 +26,7 @@ const ADD: u8 = 7;
 const LOGIC_ARITHMETIC_N: u8 = 8;
 const SKIP_IF_X_NOT_EQUALS_Y: u8 = 9;
 const SET_I: u8 = 0xA;
+const GOTO_OFFSET: u8 = 0xB;
 const DRAW: u8 = 0xD;
 
 pub struct Emulator<'a> {
@@ -87,6 +88,7 @@ impl<'a> Emulator<'a> {
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x7, .. } => self.sub_y_from_x(opcode),
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0x6, .. } => self.shift_right(opcode),
             Opcode { n1: LOGIC_ARITHMETIC_N, n4: 0xE, .. } => self.shift_left(opcode),
+            Opcode { n1: GOTO_OFFSET, .. } => self.goto_offset(opcode),
             _ => ()
         }
     }
@@ -242,5 +244,10 @@ impl<'a> Emulator<'a> {
         let shifted_bit = self.cpu.v_reg[opcode.n2 as usize] & 128;
         self.cpu.v_reg[opcode.n2 as usize] <<= 1;
         self.cpu.v_reg[0xF] = shifted_bit;
+    }
+
+    //TODO: implement quirk
+    fn goto_offset(&mut self, opcode: Opcode) {
+        self.cpu.pc = opcode.n2 as u16 * 256 + opcode.n3 as u16 * 16 + opcode.n4 as u16 + self.cpu.v_reg[0x0] as u16;
     }
 }
