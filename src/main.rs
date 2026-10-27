@@ -25,7 +25,7 @@ fn main() {
 
     let stack: Vec<u16> = Vec::new();
 
-    let mut emulator = Emulator::new(cpu, ram, &mut display, keypad, stack);
+    let mut emulator = Emulator::new(cpu, &mut ram, &mut display, keypad, stack);
  
     emulator.cycle();
 

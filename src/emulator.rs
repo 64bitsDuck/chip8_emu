@@ -31,17 +31,17 @@ const RAND: u8 = 0xC;
 const DRAW: u8 = 0xD;
 const MISC: u8 = 0xF;
 
-pub struct Emulator<'a> {
+pub struct Emulator<'a, 'b> {
     cpu: Cpu,
-    ram: Ram,
-    display: &'a mut Display,
+    ram: &'a mut Ram,
+    display: &'b mut Display,
     keypad: KeyPad,
     stack: Vec<u16>,
 }
 
-impl<'a> Emulator<'a> {
-    pub fn new(cpu: Cpu, ram: Ram, display: &mut Display, keypad: KeyPad, stack: Vec<u16>) -> Emulator<'_> {
-        Emulator { cpu, ram, display: display, keypad, stack }
+impl<'a, 'b> Emulator<'a, 'b> {
+    pub fn new(cpu: Cpu, ram: &'a mut Ram, display: &'b mut Display, keypad: KeyPad, stack: Vec<u16>) -> Emulator<'a, 'b> {
+        Emulator { cpu, ram: ram, display: display, keypad, stack }
     }
 
     pub fn cycle(&mut self) {
@@ -98,6 +98,7 @@ impl<'a> Emulator<'a> {
             Opcode { n1: MISC, .. } => match opcode {
                 Opcode { n3: 0x1, n4: 0xE, .. } => self.add_to_index(opcode),
                 Opcode { n3: 0x2, n4: 0x9, .. } => self.font_char(opcode),
+                Opcode { n3: 0x3, n4: 0x3, .. } => self.convert_to_decimal(opcode),
                 _ => ()
             }
             _ => ()
@@ -274,5 +275,19 @@ impl<'a> Emulator<'a> {
     fn font_char(&mut self, opcode: Opcode) {
         let vx = self.cpu.v_reg[opcode.n2 as usize] % 16;
         self.cpu.i = self.ram.get_chr_addr(vx) as u16;
+    }
+
+    fn convert_to_decimal(&mut self, opcode: Opcode) {
+        let mut vx = self.cpu.v_reg[opcode.n2 as usize];
+        
+        let n1 = vx % 10;
+        vx = vx / 10;
+        let n2 = vx % 10;
+        vx = vx /10;
+        let n3 = vx % 10;
+
+        self.ram.0[self.cpu.i as usize] = n3;
+        self.ram.0[(self.cpu.i+1) as usize] = n2;
+        self.ram.0[(self.cpu.i+2) as usize] = n1;
     }
 }
