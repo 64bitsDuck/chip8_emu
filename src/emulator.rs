@@ -45,7 +45,7 @@ impl<'a> Emulator<'a> {
     }
 
     pub fn cycle(&mut self) {
-        for _ in 0..265 {
+        for _ in 0..365 {
             if !self.display.can_continue() {
                 break;
             }
@@ -97,6 +97,7 @@ impl<'a> Emulator<'a> {
             Opcode { n1: RAND, .. } => self.rand(opcode),
             Opcode { n1: MISC, .. } => match opcode {
                 Opcode { n3: 0x1, n4: 0xE, .. } => self.add_to_index(opcode),
+                Opcode { n3: 0x2, n4: 0x9, .. } => self.font_char(opcode),
                 _ => ()
             }
             _ => ()
@@ -265,8 +266,13 @@ impl<'a> Emulator<'a> {
         self.cpu.v_reg[opcode.n2 as usize] = rand::random_range(u8::MIN..u8::MAX) & (opcode.n3 * 16 + opcode.n4);
     }
 
-    //TODO: implement quirk (sets VF to 1 if it overflows form 0FFF to above 1000)
+    //TODO: implement quirk (sets VF to 1 if it overflows from 0FFF to above 1000)
     fn add_to_index(&mut self, opcode: Opcode) {
         self.cpu.i += self.cpu.v_reg[opcode.n2 as usize] as u16;
+    }
+
+    fn font_char(&mut self, opcode: Opcode) {
+        let vx = self.cpu.v_reg[opcode.n2 as usize] % 16;
+        self.cpu.i = self.ram.get_chr_addr(vx) as u16;
     }
 }
