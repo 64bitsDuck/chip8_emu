@@ -99,6 +99,8 @@ impl<'a, 'b> Emulator<'a, 'b> {
                 Opcode { n3: 0x1, n4: 0xE, .. } => self.add_to_index(opcode),
                 Opcode { n3: 0x2, n4: 0x9, .. } => self.font_char(opcode),
                 Opcode { n3: 0x3, n4: 0x3, .. } => self.convert_to_decimal(opcode),
+                Opcode { n3: 0x5, n4: 0x5, .. } => self.store_to_ram(opcode),
+                Opcode { n3: 0x6, n4: 0x5, .. } => self.load_from_ram(opcode),
                 _ => ()
             }
             _ => ()
@@ -289,5 +291,28 @@ impl<'a, 'b> Emulator<'a, 'b> {
         self.ram.0[self.cpu.i as usize] = n3;
         self.ram.0[(self.cpu.i+1) as usize] = n2;
         self.ram.0[(self.cpu.i+2) as usize] = n1;
+    }
+
+    // TODO: implement quirk where I is incremented until I + X + 1
+    fn store_to_ram(&mut self, opcode: Opcode) {
+        let x = opcode.n2;
+
+        if x == 0x0 {
+            self.ram.0[self.cpu.i as usize] = self.cpu.v_reg[x as usize];
+        }
+        for n in 0x0..=x {
+            self.ram.0[(self.cpu.i+n as u16) as usize] = self.cpu.v_reg[n as usize];
+        }
+    }
+
+    fn load_from_ram(&mut self, opcode: Opcode) {
+        let x = opcode.n2;
+
+        if x == 0x0 {
+            self.cpu.v_reg[x as usize] = self.ram.0[self.cpu.i as usize];
+        }
+        for n in 0x0..=x {
+            self.cpu.v_reg[n as usize] = self.ram.0[(self.cpu.i+n as u16) as usize];
+        }
     }
 }
