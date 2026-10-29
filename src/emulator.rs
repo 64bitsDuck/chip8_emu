@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use crate::{cpu::Cpu, display::Display, keypad::KeyPad, memory::Memory};
 
 #[derive(PartialEq)]
@@ -45,16 +47,25 @@ impl<'a, 'b> Emulator<'a, 'b> {
     }
 
     pub fn cycle(&mut self) {
-        for _ in 0..self.memory.rom.size {
-            if !self.display.can_continue() {
+        let instr_count = 0;
+        let times_per_sec = 400;
+        let interval = Duration::from_secs_f64(1.0 / times_per_sec as f64);
+        let mut next_instr_time = Instant::now();
+
+        loop {
+            if instr_count > self.memory.rom.size || !self.display.can_continue() {
                 break;
             }
 
             let opcode = Self::fetch(self);
-            Self::decode_and_execute(self, opcode);
+
+            if Instant::now() >= next_instr_time {
+                Self::decode_and_execute(self, opcode);
+                next_instr_time = Instant::now() + interval;
+            }
 
             self.display.update();
-        }
+        } 
     }
 
     pub fn fetch(&mut self) -> Opcode {
