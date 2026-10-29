@@ -4,20 +4,21 @@ mod display;
 mod keypad;
 mod emulator;
 
-use std::{thread::sleep, time::Duration};
+use std::{fs::File, io, thread::sleep, time::Duration};
 
 use cpu::Cpu;
 
-use crate::{display::Display, emulator::Emulator, memory::Ram, keypad::KeyPad};
+use crate::{display::Display, emulator::Emulator, keypad::KeyPad, memory::{Memory, Rom}};
 
 const HEIGHT: usize = 32;
 const WIDTH: usize = 64;
 
-fn main() {
+fn main() -> io::Result<()> {
     let cpu: Cpu = Cpu::new();
 
-    let mut ram = Ram::new();
-    ram.load_rom("roms/3-corax+.ch8".to_string());
+    let mut rom_file = File::open("roms/3-corax+.ch8")?;
+    let rom = Rom::from_reader(&mut rom_file)?;
+    let mut ram = Memory::new(rom);
 
     let mut display = Display::new(HEIGHT, WIDTH);
 
@@ -32,4 +33,6 @@ fn main() {
     while display.can_continue() {
         sleep(Duration::new(1, 0));
     }
+
+    Ok(())
 }

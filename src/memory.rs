@@ -1,4 +1,4 @@
-use std::fs;
+use std::io;
 
 const FONT_START: usize = 0x050;
 const ROM_START: usize = 0x200;
@@ -22,25 +22,38 @@ const FONT: [u8; 80] = [0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 const CH_SZ: usize = 5;
 const FONT_END: usize = FONT_START + FONT.len();
 
-#[derive(Clone, Copy)] 
-pub struct Ram(pub [u8; 4096]);
+#[derive(Clone)] 
+pub struct Memory {
+    pub ram: [u8; 4096],
+    pub rom: Rom,
+}
 
-impl Ram {
-    pub fn new() -> Self {
-        let mut ram = Ram([0; 4096]);
-
-        ram.0[FONT_START..FONT_END].copy_from_slice(&FONT);
-
-        ram
-    }
-
-    pub fn load_rom(&mut self, path: String) {    
-        let rom = fs::read(path).expect("Should've been able to open the file");
-        self.0[ROM_START..ROM_START+rom.len()].copy_from_slice(&rom);
+impl Memory {
+    pub fn new(rom: Rom) -> Self {
+        let mut ram = [0u8; 4096];
+        ram[FONT_START..FONT_END].copy_from_slice(&FONT);
+        ram[ROM_START..ROM_START+rom.size].copy_from_slice(&rom.content);
+        
+        Memory { ram, rom }
     }
 
     /// It's needed for the character to be less than 16
     pub fn get_chr_addr(&self, chr: u8) -> usize {
         FONT_START + CH_SZ * chr as usize
     } 
+}
+
+#[derive(Clone)]
+pub struct Rom {
+    pub content: Vec<u8>,
+    pub size: usize,
+}
+
+impl Rom {
+    pub fn from_reader(reader: &mut impl io::Read) -> io::Result<Self> {
+        let mut content = Vec::with_capacity(128);
+        let size = reader.read_to_end(&mut content)?;
+        
+        Ok(Self { content, size })
+    }
 }

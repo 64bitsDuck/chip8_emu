@@ -1,4 +1,4 @@
-use crate::{cpu::Cpu, display::Display, keypad::KeyPad, memory::Ram};
+use crate::{cpu::Cpu, display::Display, keypad::KeyPad, memory::Memory};
 
 #[derive(PartialEq)]
 pub struct Opcode {
@@ -33,19 +33,19 @@ const MISC: u8 = 0xF;
 
 pub struct Emulator<'a, 'b> {
     cpu: Cpu,
-    ram: &'a mut Ram,
+    memory: &'a mut Memory,
     display: &'b mut Display,
     keypad: KeyPad,
     stack: Vec<u16>,
 }
 
 impl<'a, 'b> Emulator<'a, 'b> {
-    pub fn new(cpu: Cpu, ram: &'a mut Ram, display: &'b mut Display, keypad: KeyPad, stack: Vec<u16>) -> Emulator<'a, 'b> {
-        Emulator { cpu, ram: ram, display: display, keypad, stack }
+    pub fn new(cpu: Cpu, ram: &'a mut Memory, display: &'b mut Display, keypad: KeyPad, stack: Vec<u16>) -> Emulator<'a, 'b> {
+        Emulator { cpu, memory: ram, display: display, keypad, stack }
     }
 
     pub fn cycle(&mut self) {
-        for _ in 0..365 {
+        for _ in 0..self.memory.rom.size {
             if !self.display.can_continue() {
                 break;
             }
@@ -58,10 +58,10 @@ impl<'a, 'b> Emulator<'a, 'b> {
     }
 
     pub fn fetch(&mut self) -> Opcode {
-        let nibble_1 = self.ram.0[self.cpu.pc as usize] / 16;
-        let nibble_2 = self.ram.0[self.cpu.pc as usize] % 16;
-        let nibble_3 = self.ram.0[(self.cpu.pc + 1) as usize] / 16;
-        let nibble_4 = self.ram.0[(self.cpu.pc + 1) as usize] % 16;
+        let nibble_1 = self.memory.ram[self.cpu.pc as usize] / 16;
+        let nibble_2 = self.memory.ram[self.cpu.pc as usize] % 16;
+        let nibble_3 = self.memory.ram[(self.cpu.pc + 1) as usize] / 16;
+        let nibble_4 = self.memory.ram[(self.cpu.pc + 1) as usize] % 16;
         let curr_instruction: Opcode = Opcode::new(nibble_1, nibble_2, nibble_3, nibble_4);
         self.cpu.pc += 2;        
         curr_instruction
@@ -129,7 +129,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
         
         self.cpu.v_reg[0xF] = 0;
         for n in self.cpu.i..self.cpu.i+opcode.n4 as u16 {
-            let nth_byte = self.ram.0[n as usize];
+            let nth_byte = self.memory.ram[n as usize];
             let mut x = self.cpu.v_reg[opcode.n2 as usize] as u16 % self.display.width as u16;
             
             for p in (0..8).rev() {
@@ -276,7 +276,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
 
     fn font_char(&mut self, opcode: Opcode) {
         let vx = self.cpu.v_reg[opcode.n2 as usize] % 16;
-        self.cpu.i = self.ram.get_chr_addr(vx) as u16;
+        self.cpu.i = self.memory.get_chr_addr(vx) as u16;
     }
 
     fn convert_to_decimal(&mut self, opcode: Opcode) {
@@ -288,9 +288,9 @@ impl<'a, 'b> Emulator<'a, 'b> {
         vx = vx /10;
         let n3 = vx % 10;
 
-        self.ram.0[self.cpu.i as usize] = n3;
-        self.ram.0[(self.cpu.i+1) as usize] = n2;
-        self.ram.0[(self.cpu.i+2) as usize] = n1;
+        self.memory.ram[self.cpu.i as usize] = n3;
+        self.memory.ram[(self.cpu.i+1) as usize] = n2;
+        self.memory.ram[(self.cpu.i+2) as usize] = n1;
     }
 
     // TODO: implement quirk where I is incremented until I + X + 1
@@ -298,10 +298,10 @@ impl<'a, 'b> Emulator<'a, 'b> {
         let x = opcode.n2;
 
         if x == 0x0 {
-            self.ram.0[self.cpu.i as usize] = self.cpu.v_reg[x as usize];
+            self.memory.ram[self.cpu.i as usize] = self.cpu.v_reg[x as usize];
         }
         for n in 0x0..=x {
-            self.ram.0[(self.cpu.i+n as u16) as usize] = self.cpu.v_reg[n as usize];
+            self.memory.ram[(self.cpu.i+n as u16) as usize] = self.cpu.v_reg[n as usize];
         }
     }
 
@@ -309,10 +309,10 @@ impl<'a, 'b> Emulator<'a, 'b> {
         let x = opcode.n2;
 
         if x == 0x0 {
-            self.cpu.v_reg[x as usize] = self.ram.0[self.cpu.i as usize];
+            self.cpu.v_reg[x as usize] = self.memory.ram[self.cpu.i as usize];
         }
         for n in 0x0..=x {
-            self.cpu.v_reg[n as usize] = self.ram.0[(self.cpu.i+n as u16) as usize];
+            self.cpu.v_reg[n as usize] = self.memory.ram[(self.cpu.i+n as u16) as usize];
         }
     }
 }
