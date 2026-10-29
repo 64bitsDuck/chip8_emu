@@ -1,24 +1,11 @@
-use sdl2::event::Event;
-use sdl2::keyboard::Scancode;
+use minifb::{Key, Window};
 
 pub struct KeyPad {
-    
+    last_state: [bool; 16]
 }
 
 impl KeyPad {
-    pub fn new() -> KeyPad {
-        KeyPad {  }
+    pub fn new(window: Window) -> KeyPad {
+        KeyPad { last_state:  [false; 16] }
     }
 }
-/*
-pub fn keyboard() {
-    for event in event_pump.poll_iter()  {
-        match event {
-            Event::KeyDown { scancode: Some(Scancode::Q), .. } => {
-                // Q was pressed
-            }
-            _ => {}
-        }
-    }
-}
-    */

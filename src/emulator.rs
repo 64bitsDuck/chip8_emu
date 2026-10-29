@@ -48,9 +48,14 @@ impl<'a, 'b> Emulator<'a, 'b> {
 
     pub fn cycle(&mut self) {
         let instr_count = 0;
-        let times_per_sec = 400;
-        let interval = Duration::from_secs_f64(1.0 / times_per_sec as f64);
+
+        let instr_times_per_sec = 400;
+        let instr_interval = Duration::from_secs_f64(1.0 / instr_times_per_sec as f64);
         let mut next_instr_time = Instant::now();
+
+        let timers_times_per_sec = 60;
+        let timers_interval = Duration::from_secs_f64(1.0 / timers_times_per_sec as f64);
+        let mut next_timers_time = Instant::now();
 
         loop {
             if instr_count > self.memory.rom.size || !self.display.can_continue() {
@@ -59,9 +64,15 @@ impl<'a, 'b> Emulator<'a, 'b> {
 
             let opcode = Self::fetch(self);
 
+            if Instant::now() >= next_timers_time && (self.cpu.d_timer > 0 || self.cpu.s_timer > 0) {
+                if self.cpu.d_timer > 0 { self.cpu.d_timer -= 1; }
+                if self.cpu.s_timer > 0 { self.cpu.s_timer -= 1; }
+                next_timers_time = Instant::now() + timers_interval;
+            }
+
             if Instant::now() >= next_instr_time {
                 Self::decode_and_execute(self, opcode);
-                next_instr_time = Instant::now() + interval;
+                next_instr_time = Instant::now() + instr_interval;
             }
 
             self.display.update();
@@ -112,6 +123,9 @@ impl<'a, 'b> Emulator<'a, 'b> {
                 Opcode { n3: 0x3, n4: 0x3, .. } => self.convert_to_decimal(opcode),
                 Opcode { n3: 0x5, n4: 0x5, .. } => self.store_to_ram(opcode),
                 Opcode { n3: 0x6, n4: 0x5, .. } => self.load_from_ram(opcode),
+                Opcode { n3: 0x0, n4: 0x7, .. } => self.set_register_from_dtimer(opcode),
+                Opcode { n3: 0x1, n4: 0x5, .. } => self.set_dtimer_from_register(opcode),
+                Opcode { n3: 0x1, n4: 0x8, .. } => self.set_stimer_from_register(opcode),
                 _ => ()
             }
             _ => ()
@@ -325,5 +339,17 @@ impl<'a, 'b> Emulator<'a, 'b> {
         for n in 0x0..=x {
             self.cpu.v_reg[n as usize] = self.memory.ram[(self.cpu.i+n as u16) as usize];
         }
+    }
+
+    fn set_register_from_dtimer(&mut self, opcode: Opcode) {
+        self.cpu.v_reg[opcode.n2 as usize] = self.cpu.d_timer;
+    }
+
+    fn set_dtimer_from_register(&mut self, opcode: Opcode) {
+        self.cpu.d_timer = self.cpu.v_reg[opcode.n2 as usize];
+    }
+
+    fn set_stimer_from_register(&mut self, opcode: Opcode) {
+        self.cpu.s_timer = self.cpu.v_reg[opcode.n2 as usize];
     }
 }
