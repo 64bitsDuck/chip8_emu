@@ -4,7 +4,7 @@ pub type KeyboardState = [bool; 16];
 
 pub struct KeyPad {
     mapping: KeyboardMapping,
-    last_state: KeyboardState,
+    pub last_state: KeyboardState,
 }
 
 impl KeyPad {

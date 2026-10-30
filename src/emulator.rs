@@ -31,6 +31,7 @@ const SET_I: u8 = 0xA;
 const GOTO_OFFSET: u8 = 0xB;
 const RAND: u8 = 0xC;
 const DRAW: u8 = 0xD;
+const SKIP_IF_KEY: u8 = 0xE;
 const MISC: u8 = 0xF;
 
 pub struct Emulator<'a, 'b> {
@@ -75,6 +76,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
                 next_instr_time = Instant::now() + instr_interval;
             }
 
+            self.keypad.update(&self.display.window);
             self.display.update();
         } 
     }
@@ -117,6 +119,8 @@ impl<'a, 'b> Emulator<'a, 'b> {
             }
             Opcode { n1: GOTO_OFFSET, .. } => self.goto_offset(opcode),
             Opcode { n1: RAND, .. } => self.rand(opcode),
+            Opcode { n1: SKIP_IF_KEY, n3: 0x9, n4: 0xE, .. } => self.skip_if_key(opcode),
+            Opcode { n1: SKIP_IF_KEY, n3: 0xA, n4: 0x1, .. } => self.skip_if_not_key(opcode),
             Opcode { n1: MISC, .. } => match opcode {
                 Opcode { n3: 0x1, n4: 0xE, .. } => self.add_to_index(opcode),
                 Opcode { n3: 0x2, n4: 0x9, .. } => self.font_char(opcode),
@@ -126,6 +130,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
                 Opcode { n3: 0x0, n4: 0x7, .. } => self.set_register_from_dtimer(opcode),
                 Opcode { n3: 0x1, n4: 0x5, .. } => self.set_dtimer_from_register(opcode),
                 Opcode { n3: 0x1, n4: 0x8, .. } => self.set_stimer_from_register(opcode),
+                Opcode { n3: 0x0, n4: 0xA, .. } => self.get_key(opcode),
                 _ => ()
             }
             _ => ()
@@ -351,5 +356,38 @@ impl<'a, 'b> Emulator<'a, 'b> {
 
     fn set_stimer_from_register(&mut self, opcode: Opcode) {
         self.cpu.s_timer = self.cpu.v_reg[opcode.n2 as usize];
+    }
+
+    fn get_key(&mut self, opcode: Opcode) {
+        let key = self.get_first_pressed_key();
+
+        if key != -1 {
+            self.cpu.v_reg[opcode.n2 as usize] = key as u8;
+        }
+        else {
+            self.cpu.pc -= 2;
+        }
+    }
+
+    fn skip_if_key(&mut self, opcode: Opcode) {
+        if self.keypad.last_state[self.cpu.v_reg[opcode.n2 as usize] as usize] == true {
+            self.cpu.pc += 2;
+        } 
+    }
+
+    fn skip_if_not_key(&mut self, opcode: Opcode) {
+        if self.keypad.last_state[self.cpu.v_reg[opcode.n2 as usize] as usize] == false {
+            self.cpu.pc += 2;
+        } 
+    }
+
+    /// Returns the indice of the first pressed key in the array, -1 if no key is pressed.
+    fn get_first_pressed_key(&mut self) -> i8 {
+        for i in 0..self.keypad.last_state.len() {
+            if self.keypad.last_state[i] == true {
+                return i as i8
+            }
+        }
+        -1
     }
 }
