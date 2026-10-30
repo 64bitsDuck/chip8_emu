@@ -4,10 +4,9 @@ mod display;
 mod keypad;
 mod emulator;
 
-use std::{collections::HashMap, fs::File, io, thread::sleep, time::Duration};
+use std::{fs::File, io, thread::sleep, time::Duration};
 
 use cpu::Cpu;
-use minifb::Key;
 
 use crate::{display::Display, emulator::Emulator, keypad::{KeyPad, KeyboardMapping}, memory::{Memory, Rom}};
 
