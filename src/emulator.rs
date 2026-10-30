@@ -285,7 +285,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
     fn shift_left(&mut self, opcode: Opcode) {
         // TODO: this line varies between differrent implementations so this should be executed only if an option is toggled.
         self.cpu.v_reg[opcode.n2 as usize] = self.cpu.v_reg[opcode.n3 as usize];
-        let shifted_bit = self.cpu.v_reg[opcode.n2 as usize] & 128;
+        let shifted_bit = (self.cpu.v_reg[opcode.n2 as usize] >> 7) & 1;
         self.cpu.v_reg[opcode.n2 as usize] <<= 1;
         self.cpu.v_reg[0xF] = shifted_bit;
     }
