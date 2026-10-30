@@ -370,13 +370,13 @@ impl<'a, 'b> Emulator<'a, 'b> {
     }
 
     fn skip_if_key(&mut self, opcode: Opcode) {
-        if self.keypad.last_state[self.cpu.v_reg[opcode.n2 as usize] as usize] == true {
+        if self.keypad.is_pressed(self.cpu.v_reg[opcode.n2 as usize]) {
             self.cpu.pc += 2;
         } 
     }
 
     fn skip_if_not_key(&mut self, opcode: Opcode) {
-        if self.keypad.last_state[self.cpu.v_reg[opcode.n2 as usize] as usize] == false {
+        if !self.keypad.is_pressed(self.cpu.v_reg[opcode.n2 as usize]) {
             self.cpu.pc += 2;
         } 
     }
@@ -384,7 +384,7 @@ impl<'a, 'b> Emulator<'a, 'b> {
     /// Returns the indice of the first pressed key in the array, -1 if no key is pressed.
     fn get_first_pressed_key(&mut self) -> i8 {
         for i in 0..self.keypad.last_state.len() {
-            if self.keypad.last_state[i] == true {
+            if self.keypad.is_pressed(i as u8) {
                 return i as i8
             }
         }

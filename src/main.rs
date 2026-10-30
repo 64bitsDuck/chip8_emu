@@ -16,7 +16,7 @@ const WIDTH: usize = 64;
 fn main() -> io::Result<()> {
     let cpu: Cpu = Cpu::new();
 
-    let mut rom_file = File::open("roms/Delay Timer Test.ch8")?;
+    let mut rom_file = File::open("roms/PONG.ch8")?;
     let rom = Rom::from_reader(&mut rom_file)?;
     let mut ram = Memory::new(rom);
 
