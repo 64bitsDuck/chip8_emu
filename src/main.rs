@@ -4,11 +4,12 @@ mod display;
 mod keypad;
 mod emulator;
 
-use std::{fs::File, io, thread::sleep, time::Duration};
+use std::{collections::HashMap, fs::File, io, thread::sleep, time::Duration};
 
 use cpu::Cpu;
+use minifb::Key;
 
-use crate::{display::Display, emulator::Emulator, keypad::KeyPad, memory::{Memory, Rom}};
+use crate::{display::Display, emulator::Emulator, keypad::{KeyPad, KeyboardMapping}, memory::{Memory, Rom}};
 
 const HEIGHT: usize = 32;
 const WIDTH: usize = 64;
@@ -22,7 +23,9 @@ fn main() -> io::Result<()> {
 
     let mut display = Display::new(HEIGHT, WIDTH);
 
-    let keypad = KeyPad::new();
+    let key_map = KeyboardMapping::default();
+
+    let keypad = KeyPad::new(key_map);
 
     let stack: Vec<u16> = Vec::new();
 
