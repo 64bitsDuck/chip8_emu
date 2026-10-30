@@ -16,7 +16,7 @@ const WIDTH: usize = 64;
 fn main() -> io::Result<()> {
     let cpu: Cpu = Cpu::new();
 
-    let mut rom_file = File::open("roms/flags.ch8")?;
+    let mut rom_file = File::open("roms/keypad_test.ch8")?;
     let rom = Rom::from_reader(&mut rom_file)?;
     let mut ram = Memory::new(rom);
 
