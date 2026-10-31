@@ -362,6 +362,10 @@ impl<'a, 'b> Emulator<'a, 'b> {
         let key = self.get_first_pressed_key();
 
         if key != -1 {
+            while self.keypad.is_pressed(key as u8) {
+                self.display.update();
+                self.keypad.update(&self.display.window);
+            }
             self.cpu.v_reg[opcode.n2 as usize] = key as u8;
         }
         else {
