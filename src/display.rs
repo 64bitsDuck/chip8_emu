@@ -1,6 +1,7 @@
 use core::panic;
 
-use minifb::{Key, Scale, Window, WindowOptions};
+use minifb::{Key, Scale, Window, WindowOptions, Icon};
+use std::str::FromStr;
 
 pub struct Display {
     pub height: usize,
@@ -21,6 +22,13 @@ impl Display {
         };
         let mut window = Window::new("Chip8", width, height, opts).unwrap();
         window.set_target_fps(60);
+
+        #[cfg(target_os = "windows")]
+        {
+            if let Ok(icon) = Icon::from_str("assets/icon.ico") {
+                window.set_icon(icon);
+            }
+        }
 
         let framebuffer: Vec<bool> = vec![false; width  * height];
         Display { height, width, framebuffer, window }
