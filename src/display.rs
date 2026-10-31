@@ -20,7 +20,7 @@ impl Display {
             scale: Scale::X16,
             ..Default::default()
         };
-        let mut window = Window::new("Chip8", width, height, opts).unwrap();
+        let mut window = Window::new("64bitsDuck's Chip8 Emulator", width, height, opts).unwrap();
         window.set_target_fps(60);
 
         #[cfg(target_os = "windows")]
